@@ -20,32 +20,43 @@ schedules:
 # 黄金监控频率 (分钟)
 gold_monitor_interval: 5
 
+# 顶部大盘指数 (展示在卡片顶部)
+indices:
+  - name: "上证指数"
+    symbol_ref: "sh000001"
+    flag: "🇨🇳"
+
+  - name: "中证A500"
+    symbol_ref: "sh000510"
+    flag: "🇨🇳"
+
+  - name: "纳斯达克100"
+    symbol_ref: "usNDX"
+    flag: "🇺🇸"
+
 # 持仓列表 (仅供日报使用)
 holdings:
-  - name: "纳斯达克100 指数"
-    symbol_ref: "usNDX"        
-
   - name: "南方中证A500ETF"
     symbol_ref: "sz159352"  
 
-  - name: "恒生科技 指数"
-    symbol_ref: "hkHSTECH"
+  - name: "天弘恒生科技"
+    symbol_ref: "sh520920"
   
   - name: "黄金ETF"
     symbol_ref: "sh518880"  
 
-  - name: "红利低波50ETF"
-    symbol_ref: "sh515450"     # 南方标普红利低波50ETF (场内实时)
+  - name: "南方红利低波50ETF"
+    symbol_ref: "sh515450" 
 
-  - name: "有色金属ETF"
-    symbol_ref: "sh512400"      # 南方中证申万有色金属ETF
+  - name: "南方有色金属ETF"
+    symbol_ref: "sh512400"      
 
-  - name: "粮食ETF"
-    symbol_ref: "sz159698"      # 粮食ETF
+  - name: "鹏华粮食ETF"
+    symbol_ref: "sz159698"      
   
-  - name: "机器人ETF华夏"
+  - name: "华夏机器人ETF"
     symbol_ref: "sh562500"      # 南方机器人ETF华夏
 
-  - name: "电池ETF南方"
+  - name: "南方电池ETF"
     symbol_ref: "sz159147"     
 

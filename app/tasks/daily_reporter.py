@@ -52,51 +52,123 @@ class DailyReporter:
             logging.error(f"获取行情失败 {symbol}: {e}")
             return None, 0.00
 
+    def _build_index_column(self, item):
+        """构造顶部大盘指数列 (居中展示，配色 + 箭头)"""
+        name = item['name']
+        flag = item.get('flag', '')
+        symbol = item['symbol_ref']
+
+        price, day_change = self._get_price(symbol)
+        if price is None or price == 0:
+            return None
+
+        if day_change > 0:
+            color = "red"
+            arrow = "▲"
+            sign = "+"
+        elif day_change < 0:
+            color = "green"
+            arrow = "▼"
+            sign = ""
+        else:
+            color = "grey"
+            arrow = "─"
+            sign = ""
+
+        # 指数(如上证 3000+)用千分位，ETF/个股保留两位小数即可
+        if price >= 1000:
+            price_str = f"{price:,.2f}"
+        else:
+            price_str = f"{price}"
+
+        content = (
+            f"<font color='grey'>{flag} {name}</font>\n"
+            f"**{price_str}**\n"
+            f"<font color='{color}'>{arrow} {sign}{day_change}%</font>"
+        )
+
+        return {
+            "tag": "column",
+            "width": "weighted",
+            "weight": 1,
+            "vertical_align": "center",
+            "elements": [
+                {"tag": "markdown", "content": content, "text_align": "center"}
+            ]
+        }
+
     def run(self):
         if not self._is_trading_day():
             return
 
         logging.info("开始执行 [日报任务]...")
-        
-        # 1. 构造完美的表格头部 (使用权重 3:2:2 控制列宽)
-        elements = [
-            {
+
+        elements = []
+
+        # ============ 1. 顶部大盘指数 (动态卡片) ============
+        index_columns = []
+        for item in self.config.get('indices', []):
+            col = self._build_index_column(item)
+            if col is not None:
+                index_columns.append(col)
+
+        if index_columns:
+            elements.append({
                 "tag": "column_set",
-                "flex_mode": "none",
-                "columns": [
-                    {"tag": "column", "width": "weighted", "weight": 3, "elements": [{"tag": "markdown", "content": "**📊 标的**"}]},
-                    {"tag": "column", "width": "weighted", "weight": 2, "elements": [{"tag": "markdown", "content": "**💰 现价**"}]},
-                    {"tag": "column", "width": "weighted", "weight": 2, "elements": [{"tag": "markdown", "content": "**📈 涨跌**"}]}
-                ]
-            },
-            {"tag": "hr"} # 表头下的分割线
-        ]
-        
+                "flex_mode": "stretch",
+                "background_style": "grey",
+                "horizontal_spacing": "small",
+                "columns": index_columns
+            })
+            elements.append({"tag": "hr"})
+
+        # ============ 2. 持仓列表表头 ============
+        elements.append({
+            "tag": "column_set",
+            "flex_mode": "none",
+            "columns": [
+                {"tag": "column", "width": "weighted", "weight": 3, "elements": [{"tag": "markdown", "content": "**❤️我的持仓**"}]},
+                {"tag": "column", "width": "weighted", "weight": 2, "elements": [{"tag": "markdown", "content": "**💰 现价**"}]},
+                {"tag": "column", "width": "weighted", "weight": 2, "elements": [{"tag": "markdown", "content": "**📈 涨跌**"}]}
+            ]
+        })
+        elements.append({"tag": "hr"})
+
         valid_items = 0
 
-        # 2. 构造表格数据行
-        for item in self.config['holdings']:
-            name = item['name']
-            # 为了表格紧凑，如果名字里有"指数"两个字可以自动去掉（可选优化）
-            name = name.replace(" 指数", "") 
+        # ============ 3. 持仓数据行 (按涨跌幅由大到小排序，每行后加分割线) ============
+        holdings = self.config.get('holdings', [])
+
+        # 3.1 先批量取价，过滤掉获取失败的
+        rows = []
+        for item in holdings:
+            name = item['name'].replace(" 指数", "")
             symbol = item['symbol_ref']
-            
             price, day_change = self._get_price(symbol)
-            if price is None or price == 0: continue
+            if price is None or price == 0:
+                continue
+            rows.append({"name": name, "price": price, "change": day_change})
+
+        # 3.2 按涨跌幅由大到小排序 (涨幅最大在最上)
+        rows.sort(key=lambda r: r["change"], reverse=True)
+
+        # 3.3 渲染
+        for idx, row in enumerate(rows):
+            name = row["name"]
+            price = row["price"]
+            day_change = row["change"]
             valid_items += 1
-            
+
             if day_change > 0:
                 color = "red"
                 sign = "+"
             elif day_change < 0:
                 color = "green"
-                sign = "" 
+                sign = ""
             else:
                 color = "grey"
                 sign = ""
 
-            # 每一行都是一个 column_set，保证绝对的垂直对齐
-            # 去掉了花哨的 emoji，回归纯粹的数据展示
             elements.append({
                 "tag": "column_set",
                 "flex_mode": "none",
@@ -106,12 +178,15 @@ class DailyReporter:
                     {"tag": "column", "width": "weighted", "weight": 2, "elements": [{"tag": "markdown", "content": f"<font color='{color}'>{sign}{day_change}%</font>"}]}
                 ]
             })
-            
+            # 每行后加一条淡分割线 (最后一行不加，由底部 hr 收尾)
+            if idx < len(rows) - 1:
+                elements.append({"tag": "hr"})
+
         if valid_items == 0:
             logging.warning("日报内容为空，跳过发送")
             return
 
-        # 3. 底部风控纪律
+        # ============ 4. 底部风控纪律 ============
         elements.append({"tag": "hr"})
         elements.append({
             "tag": "note",
@@ -122,8 +197,8 @@ class DailyReporter:
                 }
             ]
         })
-        
+
         current_time = time.strftime("%Y-%m-%d %H:%M")
         title = f"💷 收盘日报 ({current_time})"
-        
+
         self.notifier.send_card(title=title, elements=elements, template="watchet")
