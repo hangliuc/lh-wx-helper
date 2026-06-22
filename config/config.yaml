@@ -48,8 +48,8 @@ holdings:
   - name: "南方红利低波50ETF"
     symbol_ref: "sh515450" 
 
-  - name: "南方有色金属ETF"
-    symbol_ref: "sh512400"      
+  - name: "嘉实稀有金属ETF"
+    symbol_ref: "sh562800"      
 
   - name: "鹏华粮食ETF"
     symbol_ref: "sz159698"      
