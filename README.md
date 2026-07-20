@@ -1,4 +1,5 @@
 # 📈 LH Finance-Sentinel
+This is master for rebase.
 
 > 个人金融风控与盯盘助手 · SRE 级高可用版
 
