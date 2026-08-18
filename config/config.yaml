@@ -60,3 +60,6 @@ holdings:
   - name: "南方电池ETF"
     symbol_ref: "sz159147"     
 
+  - name: "华夏创业板ETF"
+    symbol_ref: "sz159967"      
+
