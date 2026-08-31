@@ -89,6 +89,8 @@ notification:
     url: "https://open.feishu.cn/open-apis/bot/v2/hook/xxx"      # 日报机器人
   gold_webhook:
     url: "https://open.feishu.cn/open-apis/bot/v2/hook/yyy"      # 黄金报警机器人
+  failure_webhook:
+    url: "https://open.feishu.cn/open-apis/bot/v2/hook/zzz"      # 推送失败告警机器人（建议独立）
 
 schedules:
   times: ["12:00", "14:30", "16:00"]
@@ -161,7 +163,7 @@ docker run -d \
 
 - **高信噪比 > 全量推送**：宁可一天不打扰，也不发"还在区间内震荡"这种废话。
 - **依赖注入 + 单一职责**：`main.py` 只负责装配，`Notifier` 只管推送，`Task` 只管业务逻辑，互不耦合。
-- **失败可恢复**：网络异常和飞书限流走指数退避重试；状态用 JSON 落盘，容器随时可挂。
+- **失败可恢复**：网络异常、飞书限流、飞书 `19006 internal error` 和 HTTP 5xx 都走指数退避重试；最终失败会向 `failure_webhook` 发送告警。未配置该项时，日报失败会复用 `gold_webhook` 告警；状态用 JSON 落盘，容器随时可挂。
 - **数据自洽**：日报红涨绿跌、黄金卡片整张红/绿，颜色语言和金融语义保持一致。
 
 > 💡 风控纪律：优质资产越跌越买，做时间的朋友。

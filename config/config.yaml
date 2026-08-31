@@ -14,6 +14,10 @@ notification:
     # url: "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=8d9d826a-05f3-4d3d-926b-45bcf581ba9c"
     url: "https://open.feishu.cn/open-apis/bot/v2/hook/32969fb4-87d7-4297-8124-dec34193e8de" 
 
+  # 推送彻底失败时使用的独立告警机器人。
+  failure_webhook:
+    url: "https://open.feishu.cn/open-apis/bot/v2/hook/5d039335-1c1f-42a6-b8df-6e2ce06b376b"
+
 schedules:
   times: ["12:00", "14:30", "16:00"]
 
@@ -62,4 +66,3 @@ holdings:
 
   - name: "华夏创业板ETF"
     symbol_ref: "sz159967"      
-

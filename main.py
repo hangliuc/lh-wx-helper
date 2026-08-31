@@ -23,10 +23,17 @@ def run():
     config = load_config()
     if not config: return
 
+    notification = config['notification']
+    # 失败告警优先走独立机器人；未配置时复用黄金机器人，确保现有部署升级后即可收到日报故障提醒。
+    failure_config = notification.get('failure_webhook') or notification.get('gold_webhook')
+    failure_notifier = FeishuNotifier(failure_config) if failure_config and failure_config.get('url') else None
+    if not failure_notifier:
+        logging.warning("⚠️ 未配置 failure_webhook，推送彻底失败时只能记录日志。")
+
     # 通道A: 日报机器人
-    daily_notifier = FeishuNotifier(config['notification']['webhook'])
+    daily_notifier = FeishuNotifier(notification['webhook'], failure_notifier)
     # 通道B: 黄金报警机器人
-    gold_notifier = FeishuNotifier(config['notification']['gold_webhook'])
+    gold_notifier = FeishuNotifier(notification['gold_webhook'], failure_notifier)
 
     # 初始化任务 (Task) - 依赖注入 Notifier
     daily_task = DailyReporter(config, daily_notifier)

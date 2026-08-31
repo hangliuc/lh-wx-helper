@@ -131,12 +131,12 @@ class GoldWatcher:
                 }
             ]
             
-            self.notifier.send_card(title=title, elements=elements, template=template)
-            
-            self.alerted_levels.add(level)
-            if level > 0:
-                for i in range(1, level): self.alerted_levels.add(i)
-            elif level < 0:
-                for i in range(level + 1, 0): self.alerted_levels.add(i)
-            
-            self._save_state()
+            if self.notifier.send_card(title=title, elements=elements, template=template):
+                self.alerted_levels.add(level)
+                if level > 0:
+                    for i in range(1, level): self.alerted_levels.add(i)
+                elif level < 0:
+                    for i in range(level + 1, 0): self.alerted_levels.add(i)
+                self._save_state()
+            else:
+                logging.error("黄金风控警报未送达，本轮不记录已报警档位，后续轮询会继续尝试发送。")
